@@ -143,6 +143,9 @@ func TestHomematicTree(t *testing.T) {
 			}
 		}
 	}
+	if v := gosnmp.ToBigInt(got[dev+".17."+idx("HmIP-RF", "000A1B2C3D4E5F")].Value).Int64(); v < 0 || v > 60 {
+		t.Errorf("hmDevLastSeenAge %d", v)
+	}
 	if v := gosnmp.ToBigInt(got[hmmib.System.String()+".5.0"].Value).Int64(); v != 1 {
 		t.Errorf("hmSysHealth %d, want ok(1)", v)
 	}

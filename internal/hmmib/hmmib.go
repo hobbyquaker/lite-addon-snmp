@@ -388,8 +388,8 @@ func (m *Module) devices(l *vbs, st *source.State) {
 			}
 		}
 		age := int64(-1)
-		if !d.LastSeen.IsZero() {
-			age = int64(now.Sub(d.LastSeen) / time.Second)
+		if ls := st.LastSeen[d.Interface+"/"+d.Address]; !ls.IsZero() {
+			age = max(int64(now.Sub(ls)/time.Second), 0)
 		}
 		fw := d.Firmware
 		if fw == "" && d.Version > 0 {

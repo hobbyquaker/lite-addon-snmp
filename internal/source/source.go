@@ -62,7 +62,6 @@ type Device struct {
 	Firmware  string
 	Version   int
 	Channels  []Channel
-	LastSeen  time.Time
 }
 
 // Value is one datapoint value from the store or the stream.
@@ -82,6 +81,8 @@ type State struct {
 	Interfaces map[string]*Interface
 	Devices    map[string]*Device // "<interface>/<address>"
 	Values     map[string]Value   // "<interface>/<channel address>/<key>"
+	// LastSeen is the newest event or confirmed value per device, "<interface>/<address>".
+	LastSeen map[string]time.Time
 	Names      *litesource.Names
 	// Paramsets is the description cache (keys per channel type).
 	Paramsets       litesource.ParamsetCache
@@ -144,7 +145,7 @@ func New(o Options) *Source {
 		o.MessagesEvery = 30 * time.Second
 	}
 	s := &Source{o: o, devicesDirty: make(chan struct{}, 1), metaDirty: make(chan struct{}, 1)}
-	s.st = State{Interfaces: map[string]*Interface{}, Devices: map[string]*Device{}, Values: map[string]Value{}}
+	s.st = State{Interfaces: map[string]*Interface{}, Devices: map[string]*Device{}, Values: map[string]Value{}, LastSeen: map[string]time.Time{}}
 	return s
 }
 
@@ -294,11 +295,6 @@ func (s *Source) listDevices(ctx context.Context) bool {
 				delete(st.Interfaces, name)
 			}
 		}
-		for k, d := range devices {
-			if old := st.Devices[k]; old != nil {
-				d.LastSeen = old.LastSeen
-			}
-		}
 		st.Devices = devices
 		if ps != nil {
 			st.Paramsets = ps
@@ -330,8 +326,8 @@ func (s *Source) seed(ctx context.Context) (string, error) {
 		st.Values = map[string]Value{}
 		for _, e := range snap.Entries {
 			st.Values[e.Interface+"/"+e.Address+"/"+e.Key] = Value{Raw: e.Value, TS: e.TS}
-			if d := st.Devices[e.Interface+"/"+DeviceOf(e.Address)]; d != nil && e.TS.After(d.LastSeen) && e.Source != "restored" {
-				d.LastSeen = e.TS
+			if k := e.Interface + "/" + DeviceOf(e.Address); e.Confirmed && e.TS.After(st.LastSeen[k]) {
+				st.LastSeen[k] = e.TS
 			}
 		}
 		st.seeded = true
@@ -391,8 +387,8 @@ func (s *Source) follow(ctx context.Context, since string) bool {
 					i.Events++
 					i.LastEvent = ts
 				}
-				if d := st.Devices[e.Interface+"/"+DeviceOf(e.Address)]; d != nil && ts.After(d.LastSeen) {
-					d.LastSeen = ts
+				if k := e.Interface + "/" + DeviceOf(e.Address); ts.After(st.LastSeen[k]) {
+					st.LastSeen[k] = ts
 				}
 				if keySet[e.Key] {
 					st.Values[e.Interface+"/"+e.Address+"/"+e.Key] = Value{Raw: e.Value, TS: ts}

@@ -95,7 +95,7 @@ func run(confDir, id string, port, snmpPort int, listen, base, basePath, www, to
 
 	wrap := func(h http.Handler) http.Handler { return h }
 	if !noSession {
-		c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelAdmin, OnRefused: func(r *http.Request, reason string) {
+		c := addonkit.NewChecker(addonkit.SessionOptions{Base: base, Need: addonkit.LevelAdmin, AddonID: id, OnRefused: func(r *http.Request, reason string) {
 			log.Printf("snmp: refused %s %s: %s", r.Method, r.URL.Path, reason)
 		}})
 		wrap = c.Handler
