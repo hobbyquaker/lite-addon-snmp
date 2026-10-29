@@ -121,4 +121,44 @@ for o in UCD-SNMP-MIB::memTotalReal.0 UCD-SNMP-MIB::laLoadInt.1 HOST-RESOURCES-M
     case "$r" in *"No Such"*) fail "$o: $r" ;; esac
 done
 ok "the standard objects NMSs poll answer"
+# notifications: snmptrapd receives a v2c trap, a v3 trap (our engine, SHA-256/AES) and a v3
+# inform (its engine discovered, SHA-512/AES-256), the tests and a service message raised
+TRAPS=16262
+post users '{"name":"trapuser","auth":"SHA-256","priv":"AES","view":"all","auth_password":"authpassword1","priv_password":"privpassword1"}'
+post users '{"name":"informuser","auth":"SHA-512","priv":"AES-256","view":"all","auth_password":"authpassword1","priv_password":"privpassword1"}'
+ENGINE=$(curl -fsS "$API/config" | sed -n 's/.*"engine_id":"\([0-9a-f]*\)".*/\1/p')
+[ -n "$ENGINE" ] || fail "no engine id"
+mkdir -p "$WORK/trapd"
+cat >"$WORK/trapd/snmptrapd.conf" <<CONF
+authCommunity log interop-traps
+createUser -e 0x$ENGINE trapuser SHA-256 authpassword1 AES privpassword1
+createUser informuser SHA-512 authpassword1 AES-256 privpassword1
+authUser log trapuser
+authUser log informuser
+CONF
+TRAPD=$(docker run -d --network host -v "$WORK/mibs:/mibs:ro" -v "$WORK/trapd:/trapd:ro" "$IMAGE" snmptrapd -f -Lo -C -c /trapd/snmptrapd.conf -x unix:/tmp/no-agentx -m +LITE-SNMP-MIB udp:127.0.0.1:$TRAPS)
+# (no AgentX master: without -x snmptrapd may wait on localhost:705 before it listens)
+for _ in $(seq 1 30); do docker logs "$TRAPD" 2>&1 | grep -q "NET-SNMP version" && break; sleep 0.5; done
+trap 'docker rm -f "$TRAPD" >/dev/null 2>&1; cleanup' EXIT
+put() { curl -fsS -X PUT -H 'X-CCU-Addon-Request: 1' -H 'Content-Type: application/json' "$API/$1" -d "$2" >/dev/null; }
+tg() { printf '{"id":"%s","name":"%s","enabled":true,"host":"127.0.0.1","port":%s,"kind":"%s",%s,"rules":[]}' "$1" "$1" $TRAPS "$2" "$3"; }
+put traps "{\"targets\":[$(tg t1 v2c-trap '"community":"interop-traps"'),$(tg t2 v3-trap '"user":"trapuser"'),$(tg t3 v3-inform '"user":"informuser"')],\"rules\":[{\"kind\":\"service-message\",\"enabled\":true,\"selection\":\"\"}]}"
+for t in t1 t2 t3; do
+    r=$(curl -sS -X POST -H 'X-CCU-Addon-Request: 1' "$API/traps/targets/$t/test")
+    case "$r" in *'"ok":true'*) ;; *) fail "test of $t: $r" ;; esac
+done
+ok "the tests were sent (the inform acknowledged)"
+curl -fsS -X POST "http://127.0.0.1:$FAKE/fake/service-messages" -d '[{"interface":"BidCos-RF","address":"JEQ0123456","channel":"0","key":"CONFIG_PENDING","value":true,"since":"2026-10-30T00:00:00Z","seen":"event","type":"HM-PB-2-WM55-2","name":"Taster Flur"}]' >/dev/null
+sleep 4
+docker logs "$TRAPD" >"$WORK/trapd.log" 2>&1
+n=$(grep -c 'hmTestNotification' "$WORK/trapd.log" || true)
+[ "$n" -ge 3 ] || { cat "$WORK/trapd.log"; fail "snmptrapd logged $n test notifications"; }
+ok "snmptrapd: $n hmTestNotification (v2c trap, v3 trap, v3 inform)"
+n=$(grep -c 'hmServiceMessageRaised' "$WORK/trapd.log" || true)
+[ "$n" -ge 3 ] || { cat "$WORK/trapd.log"; fail "hmServiceMessageRaised reached $n of 3 targets"; }
+grep -q 'hmNotifKey.0 = STRING: CONFIG_PENDING' "$WORK/trapd.log" || { cat "$WORK/trapd.log"; fail "the service message's objects"; }
+ok "snmptrapd: hmServiceMessageRaised with its objects at all three targets"
+n=$(grep -c 'hmServiceMessageCleared' "$WORK/trapd.log" || true)
+[ "$n" -ge 3 ] || fail "hmServiceMessageCleared reached $n of 3 targets"
+ok "snmptrapd: hmServiceMessageCleared for the demo's two messages at all three targets"
 echo "interop: all passed"

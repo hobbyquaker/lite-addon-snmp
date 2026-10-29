@@ -22,6 +22,7 @@ import (
 	"github.com/hobbyquaker/lite-addon-snmp/internal/config"
 	"github.com/hobbyquaker/lite-addon-snmp/internal/httpapi"
 	"github.com/hobbyquaker/lite-addon-snmp/internal/source"
+	"github.com/hobbyquaker/lite-addon-snmp/internal/trap"
 )
 
 // version is set by the build (-ldflags "-X main.version=…").
@@ -91,7 +92,10 @@ func run(confDir, id string, port, snmpPort int, listen, base, basePath, www, to
 	go src.Run(ctx)
 
 	a := app.New(app.Options{Conf: conf, Source: src, Engine: engine, Version: version, Port: snmpPort, Listen: listen, Log: logf})
+	traps := trap.New(trap.Options{Conf: conf, Source: src, Engine: engine, Started: a.Started, Log: logf})
+	a.TrapCounters, a.OnApply, a.OnAuthFailure = traps, traps.Apply, traps.AuthFailure
 	go a.Run(ctx)
+	go traps.Run(ctx)
 
 	wrap := func(h http.Handler) http.Handler { return h }
 	if !noSession {
@@ -100,7 +104,7 @@ func run(confDir, id string, port, snmpPort int, listen, base, basePath, www, to
 		}})
 		wrap = c.Handler
 	}
-	h := httpapi.New(httpapi.Options{BasePath: basePath, WWW: www, App: a, Conf: conf, Source: src, Wrap: wrap, Version: version, Port: snmpPort})
+	h := httpapi.New(httpapi.Options{BasePath: basePath, WWW: www, App: a, Conf: conf, Source: src, Wrap: wrap, Version: version, Port: snmpPort, Traps: traps})
 	l, err := addonkit.Listen(port, "")
 	if err != nil {
 		return err

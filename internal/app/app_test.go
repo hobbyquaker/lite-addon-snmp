@@ -18,6 +18,7 @@ import (
 	"github.com/hobbyquaker/lite-addon-snmp/internal/selection"
 	"github.com/hobbyquaker/lite-addon-snmp/internal/snmp"
 	"github.com/hobbyquaker/lite-addon-snmp/internal/source"
+	"github.com/hobbyquaker/lite-addon-snmp/internal/trap"
 	"github.com/hobbyquaker/lite-addon-snmp/mibs"
 )
 
@@ -26,8 +27,9 @@ type Harness struct {
 	Sys  *fakesys.System
 	Src  *source.Source
 	App  *App
-	Conf *config.Store
-	Port int
+	Conf  *config.Store
+	Port  int
+	Traps *trap.Engine
 }
 
 func start(t *testing.T, prepare func(c *config.Config)) *Harness {
@@ -61,8 +63,11 @@ func start(t *testing.T, prepare func(c *config.Config)) *Harness {
 	t.Cleanup(cancel)
 	go src.Run(ctx)
 	a := New(Options{Conf: conf, Source: src, Engine: eng, Version: "test", Port: 0, Listen: "127.0.0.1", Log: t.Logf})
+	traps := trap.New(trap.Options{Conf: conf, Source: src, Engine: eng, Started: a.Started, Log: t.Logf, Every: 100 * time.Millisecond, Timeout: time.Second, Retries: 1})
+	a.TrapCounters, a.OnApply, a.OnAuthFailure = traps, traps.Apply, traps.AuthFailure
 	go a.Run(ctx)
-	h := &Harness{Sys: sys, Src: src, App: a, Conf: conf}
+	go traps.Run(ctx)
+	h := &Harness{Sys: sys, Src: src, App: a, Conf: conf, Traps: traps}
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
 		ready := false

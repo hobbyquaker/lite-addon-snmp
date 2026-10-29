@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"strconv"
 	"sync"
 	"time"
@@ -56,8 +57,12 @@ type App struct {
 	listenErr string
 	addrs     []net.Addr
 
-	// TrapCounters is filled by the trap engine (0.2.0).
+	// TrapCounters is filled by the trap engine.
 	TrapCounters TrapCounters
+	// OnApply is called after every Apply (the trap engine's targets); OnAuthFailure for every
+	// authentication failure the agent sees. Set them before Run.
+	OnApply       func()
+	OnAuthFailure func()
 }
 
 // TrapCounters are the notification statistics the tree reports.
@@ -81,7 +86,11 @@ func New(o Options) *App {
 	}
 	a := &App{o: o, Tree: mib.New(), Started: time.Now()}
 	a.Sampler = hostmib.NewSampler(o.FS)
-	a.Agent = agent.New(agent.Options{Tree: a.Tree, Root: hmmib.Root, Engine: o.Engine, Log: o.Log})
+	a.Agent = agent.New(agent.Options{Tree: a.Tree, Root: hmmib.Root, Engine: o.Engine, Log: o.Log, OnAuthFailure: func(netip.Addr) {
+		if a.OnAuthFailure != nil {
+			a.OnAuthFailure()
+		}
+	}})
 	a.Agent.Register(a.Tree, func() bool { return o.Conf.Get().AuthTraps })
 	host := &hostmib.Host{FS: o.FS, Sampler: a.Sampler, ObjectID: hmmib.AgentOID, Started: a.Started, ORs: ORs(), Config: func() hostmib.System {
 		c := o.Conf.Get()
@@ -170,6 +179,9 @@ func (a *App) Apply() {
 	a.incMu.Unlock()
 	a.Tree.Invalidate()
 	a.relisten(listenKey{on: c.Enabled, ipv4: c.IPv4, ipv6: c.IPv6})
+	if a.OnApply != nil {
+		a.OnApply()
+	}
 }
 
 func (a *App) relisten(k listenKey) {

@@ -45,6 +45,7 @@ func NewOn(fl *fakelite.Server, addr string) *System {
 	proxy.FlushInterval = -1
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/system/v1/", s.system)
+	mux.HandleFunc("POST /fake/service-messages", s.setMessages)
 	mux.Handle("/", proxy)
 	s.srv = httptest.NewUnstartedServer(mux)
 	if addr != "" {
@@ -125,6 +126,18 @@ func (s *System) system(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+// setMessages replaces the service messages (a test's control: POST /fake/service-messages with
+// a JSON list).
+func (s *System) setMessages(w http.ResponseWriter, r *http.Request) {
+	var l []map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	s.Update(func(s *System) { s.ServiceMessages = l })
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *System) stream(w http.ResponseWriter, r *http.Request) {

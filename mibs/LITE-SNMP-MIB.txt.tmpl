@@ -5,12 +5,12 @@ LITE-SNMP-MIB DEFINITIONS ::= BEGIN
 --
 
 IMPORTS
-    MODULE-IDENTITY, OBJECT-TYPE, OBJECT-IDENTITY,
+    MODULE-IDENTITY, OBJECT-TYPE, OBJECT-IDENTITY, NOTIFICATION-TYPE,
     Counter32, Counter64, Gauge32, Integer32
         FROM SNMPv2-SMI
     TEXTUAL-CONVENTION, DisplayString, TruthValue, DateAndTime, TimeStamp
         FROM SNMPv2-TC
-    MODULE-COMPLIANCE, OBJECT-GROUP
+    MODULE-COMPLIANCE, OBJECT-GROUP, NOTIFICATION-GROUP
         FROM SNMPv2-CONF
     SnmpAdminString
         FROM SNMP-FRAMEWORK-MIB
@@ -40,6 +40,9 @@ liteSnmpMIB MODULE-IDENTITY
     REVISION "{{.Updated}}"
     DESCRIPTION
         "{{.Revision}}"
+    REVISION "202610290000Z"
+    DESCRIPTION
+        "0.1.0: the system, interface, service message, device and statistics objects."
     ::= { {{.RootParent}} {{.RootArc}} }
 
 -- Textual conventions
