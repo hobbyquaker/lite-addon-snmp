@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0] - 2026-10-30
+
+- **Notifications:** SNMPv2c traps, SNMPv3 traps (the agent's engine) and SNMPv3 informs (the receiver's engine
+  discovered, acknowledged, 3 retries of 5 s) to any number of targets, each with the rules it gets.
+- **Rules**, each raising on a change and clearing again: service messages (by selection), radio module
+  disconnected/connected, duty cycle high/normal (two samples at the threshold, 10 points of hysteresis; the
+  interface's own threshold or one of your own), the interface daemons down/up, Status warnings, unreachable devices
+  (by selection, off by default). `coldStart` at start, `authenticationFailure` when switched on (at most once a
+  minute).
+- **No flood after a restart:** the first complete state is the baseline; one notification per change.
+- **Per target:** at most 20 notifications a minute, a queue of 1,000 (the oldest dropped and counted), a Test button
+  (`hmTestNotification`), and its counters on the status page; `hmStatTrapsSent` and `hmStatTrapsFailed` count them.
+- **LITE-SNMP-MIB:** the notifications (`liteSnmpNotifications`) and their objects (`hmNotificationObjects`), still
+  under the provisional root.
+
 ## [0.1.0] - 2026-10-30
 
 The first release, for openccu-lite.

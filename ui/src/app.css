@@ -386,3 +386,18 @@ button.snmp-danger {
 input.snmp-invalid {
     outline: 2px solid var(--hmm-error, #c33);
 }
+
+.snmp-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+input.snmp-narrow {
+    width: 5em;
+}
+
+/* a button whose label changes keeps its width */
+button.snmp-fixed {
+    min-width: 6.5em;
+}

@@ -66,11 +66,33 @@ test('builds a selection with a live count and uses it for the device table', as
     await expect(page.getByTestId('device-rows-count')).toContainText('1 rows', {timeout: 10_000});
 });
 
+test('adds a v2c notification target and sends a test', async ({page}) => {
+    await page.goto('./');
+    await page.getByRole('tab', {name: /Notifications/}).click();
+    await expect(page.getByTestId('rules')).toContainText('Service messages');
+    await page.getByTestId('target-add').click();
+    await page.getByTestId('target-name').fill('nms');
+    await page.getByTestId('target-host').fill('127.0.0.1');
+    await page.getByTestId('target-port').fill('16299');
+    await page.getByTestId('target-kind').selectOption('v2c-trap');
+    await page.getByTestId('target-community').fill('traps');
+    await page.getByTestId('target-save').click();
+    await expect(page.getByTestId('targets')).toContainText('127.0.0.1:16299');
+    await page.getByTestId('target-test-nms').click();
+    await expect(page.getByText('The test was sent.')).toBeVisible();
+    // switching a rule off is stored
+    await page.getByTestId('rule-warning').uncheck();
+    await page.reload();
+    await page.getByRole('tab', {name: /Notifications/}).click();
+    await expect(page.getByTestId('rule-warning')).not.toBeChecked();
+});
+
 test('the status counts the requests', async ({page}) => {
     await page.goto('./');
     await page.getByRole('tab', {name: /Status/}).click();
     await expect(page.getByTestId('status')).toContainText('Listening');
     await expect(page.getByTestId('status')).toContainText('yes');
+    await expect(page.getByTestId('trap-status')).toContainText('nms');
 });
 
 test('the agent tab offers the MIB and the engine id', async ({page}) => {

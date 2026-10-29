@@ -50,7 +50,34 @@ und Empfangsstärke. Nur lesend, SNMPv3 mit SHA-256 und AES als Standard.
 - **Status:** Anfragen pro Minute, die letzten Quellen mit Zugang, fehlgeschlagene Anmeldungen, der Zustand der
   Datenquellen, und eine fertige `snmpwalk`-Zeile je Benutzer (ohne Passwörter).
 
-Benachrichtigungen (Traps und Informs) folgen in 0.2.0, eine Datenpunkttabelle in einer späteren Version.
+Eine Datenpunkttabelle folgt in einer späteren Version.
+
+## Benachrichtigungen (Traps und Informs)
+
+Ab 0.2.0 meldet der Agent Änderungen von sich aus, als **SNMPv2c-Trap**, **SNMPv3-Trap** oder **SNMPv3-Inform**
+(bestätigt, mit Wiederholung), an beliebig viele Ziele. Jede **Regel** meldet, wenn etwas auftritt, und noch einmal,
+wenn es wieder weg ist:
+
+| Regel | Benachrichtigungen |
+| --- | --- |
+| Servicemeldungen (nach Auswahl) | `hmServiceMessageRaised` / `…Cleared` |
+| Funkmodul getrennt / verbunden | `hmInterfaceDisconnected` / `…Connected` |
+| Duty Cycle (zwei Messungen über der Schwelle, zurück 10 Punkte darunter) | `hmDutyCycleHigh` / `…Normal` |
+| Schnittstellendienste rfd, hmipserver, multimacd, hs485d | `hmServiceDown` / `…Up` |
+| Statuswarnungen | `hmWarningRaised` / `…Cleared` |
+| Geräte nicht erreichbar (nach Auswahl; aus, bis eingeschaltet) | `hmDeviceUnreachable` / `…Reachable` |
+
+Dazu `coldStart` beim Start und, wenn eingeschaltet, `authenticationFailure`. Nach einem Neustart gilt der aktuelle
+Zustand als Ausgangspunkt: es kommt keine Flut alter Meldungen. Je Ziel höchstens 20 Benachrichtigungen pro Minute
+und eine Warteschlange von 1.000; ein **Test**-Knopf je Ziel sendet `hmTestNotification`. Ein SNMPv3-Trap geht mit
+der Engine-ID des Agenten (Reiter *Agent*) hinaus, ein Inform mit der des Empfängers, die der Agent selbst ermittelt.
+Für net-snmps `snmptrapd`:
+
+```
+createUser -e 0x<Engine-ID des Agenten> nms SHA-256 <Passwort> AES <Passwort>   # für v3-Traps
+createUser nms-inform SHA-256 <Passwort> AES <Passwort>                          # für v3-Informs
+authUser log nms nms-inform
+```
 
 ## Installation
 
@@ -93,7 +120,7 @@ für jede Zeile.
 - Nur lesend; Schreiben wird abgelehnt und gezählt.
 - Ohne Zugang keine Antwort; SNMPv3 immer mit Verschlüsselung; v1/v2c nur ausdrücklich und nur aus eingetragenen
   Netzen; je Quelle eine Ratenbegrenzung und eine Sperre nach wiederholten Fehlanmeldungen.
-- Keine Verbindungen nach außen (ab 0.2.0 nur zu den Trap-Zielen, die Sie einrichten). Keine Telemetrie.
+- Keine Verbindungen nach außen außer zu den Trap-Zielen, die Sie einrichten. Keine Telemetrie.
 - Die Konfiguration liegt in `/usr/local/etc/config/addons/snmp/` (Modus 0600) und ist Teil der Systemsicherung.
   Ein Deinstallieren lässt sie für eine Neuinstallation liegen.
 
@@ -103,8 +130,8 @@ für jede Zeile.
 go test -race ./...                         # die Go-Tests, mit gosnmp als unabhängigem Client
 (cd ui && npm ci && npm run check && npm test && npm run build)
 (cd ui && npx playwright test)              # die Seite gegen das System-Double (scripts/dev-serve.sh)
-test/interop/run.sh                         # net-snmp und smilint in Docker gegen den Agenten
-VERSION=0.1.0 scripts/build.sh              # die Pakete für aarch64, x86_64 und armv7l
+test/interop/run.sh                         # net-snmp, snmptrapd und smilint in Docker gegen den Agenten
+VERSION=0.2.0 scripts/build.sh              # die Pakete für aarch64, x86_64 und armv7l
 ```
 
 `scripts/dev-serve.sh` startet den Daemon gegen ein kleines Demo-System: Seite unter

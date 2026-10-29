@@ -19,6 +19,7 @@ header `X-CCU-Addon-Request`. Errors are `{"error": "<code>", "message": "…"}`
 | `POST api/v1/selections/preview` | a selection → `{count: {devices, channels, datapoints}, sample: [first 20 devices], recent: []}` |
 | `PUT api/v1/tables` | `{device_table: "<selection id>" or ""}` |
 | `GET api/v1/tables/devices` | the device table as the agent serves it: `{column_prefix, rows: [{interface, address, type, name, index}]}` |
-| `GET api/v1/status` | requests (total, last minute), the last sources, authentication failures, refused sets, the data sources' state |
+| `GET api/v1/status` | requests (total, last minute), the last sources, authentication failures, refused sets, the data sources' state, and `traps: {sent, failed, targets: [{id, name, sent, failed, dropped, queued, last_error, last_sent}], recent: [{at, name, text}]}` |
 | `GET api/v1/mib` | `LITE-SNMP-MIB.txt` |
-| `PUT api/v1/traps`, `POST api/v1/traps/targets/{id}/test` | the notification targets and rules (from 0.2.0) |
+| `PUT api/v1/traps` | `{targets: [{id, name, enabled, host, port, kind: v2c-trap\|v3-trap\|v3-inform, community?, user?, rules: []}], rules: [{kind, enabled, selection, threshold?}]}`; a target without an id gets one; `rules` empty sends every rule |
+| `POST api/v1/traps/targets/{id}/test` | sends `hmTestNotification` now and answers how it went (an inform's acknowledgement included) |

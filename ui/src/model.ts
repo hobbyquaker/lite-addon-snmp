@@ -309,3 +309,9 @@ export function formatValue(v: unknown): string {
     if (typeof v === 'string') return v;
     return JSON.stringify(v);
 }
+
+/** The notification rules, in the page's order. */
+export const RULE_KINDS = ['service-message', 'interface', 'duty-cycle', 'service', 'warning', 'unreachable'];
+
+/** The rules that watch devices and take a selection. */
+export const DEVICE_RULES = ['service-message', 'unreachable'];
