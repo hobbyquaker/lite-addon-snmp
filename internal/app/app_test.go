@@ -24,9 +24,9 @@ import (
 
 // Harness is a running addon against the fake system.
 type Harness struct {
-	Sys  *fakesys.System
-	Src  *source.Source
-	App  *App
+	Sys   *fakesys.System
+	Src   *source.Source
+	App   *App
 	Conf  *config.Store
 	Port  int
 	Traps *trap.Engine
