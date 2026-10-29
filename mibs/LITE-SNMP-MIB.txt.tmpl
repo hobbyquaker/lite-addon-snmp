@@ -1,0 +1,729 @@
+LITE-SNMP-MIB DEFINITIONS ::= BEGIN
+
+--
+-- {{.Banner}}
+--
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, OBJECT-IDENTITY,
+    Counter32, Counter64, Gauge32, Integer32
+        FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION, DisplayString, TruthValue, DateAndTime, TimeStamp
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    SnmpAdminString
+        FROM SNMP-FRAMEWORK-MIB
+    {{.RootParent}}
+        FROM {{.RootModule}};
+
+liteSnmpMIB MODULE-IDENTITY
+    LAST-UPDATED "{{.Updated}}"
+    ORGANIZATION "lite-addon-snmp"
+    CONTACT-INFO
+        "https://github.com/hobbyquaker/lite-addon-snmp"
+    DESCRIPTION
+        "The Homematic side of an openccu-lite system: its identity and
+        health, the interface processes and their radios, the service
+        messages, the devices and the agent's statistics, as answered by
+        the addon lite-addon-snmp.
+
+        PROVISIONAL: this module lives under net-snmp's experimental
+        playpen (NET-SNMP-MIB netSnmpPlaypen) until it moves to an own
+        IANA Private Enterprise Number. Its OIDs will change then; the
+        agent answers both trees for one release and the release notes
+        say when to replace this file in the network management system.
+
+        Every table that names Homematic things is indexed by strings
+        (interface name, address, key), so a row keeps its OID across
+        restarts and re-pairing."
+    REVISION "{{.Updated}}"
+    DESCRIPTION
+        "{{.Revision}}"
+    ::= { {{.RootParent}} {{.RootArc}} }
+
+-- Textual conventions
+
+HmTriState ::= TEXTUAL-CONVENTION
+    STATUS current
+    DESCRIPTION
+        "A flag that may not be known: unknown(3) when the system has not
+        reported the datapoint."
+    SYNTAX INTEGER { true(1), false(2), unknown(3) }
+
+-- The subtrees
+
+liteSnmpObjects     OBJECT IDENTIFIER ::= { liteSnmpMIB 1 }
+liteSnmpConformance OBJECT IDENTIFIER ::= { liteSnmpMIB 3 }
+liteSnmpProducts    OBJECT IDENTIFIER ::= { liteSnmpMIB 4 }
+
+hmSystem            OBJECT IDENTIFIER ::= { liteSnmpObjects 1 }
+hmServiceMessages   OBJECT IDENTIFIER ::= { liteSnmpObjects 3 }
+hmStatistics        OBJECT IDENTIFIER ::= { liteSnmpObjects 5 }
+
+liteSnmpAgent OBJECT-IDENTITY
+    STATUS current
+    DESCRIPTION
+        "The sysObjectID of lite-addon-snmp."
+    ::= { liteSnmpProducts 1 }
+
+-- hmSystem
+
+hmSysProduct OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The product: openccu-lite."
+    ::= { hmSystem 1 }
+
+hmSysVersion OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "openccu-lite's version (the LITE= line of /VERSION)."
+    ::= { hmSystem 2 }
+
+hmSysBase OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The OpenCCU base version the system is built on."
+    ::= { hmSystem 3 }
+
+hmSysOcculitedCommit OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The commit of the system service occulited."
+    ::= { hmSystem 4 }
+
+hmSysHealth OBJECT-TYPE
+    SYNTAX      INTEGER { ok(1), degraded(2), unknown(3) }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "degraded(2) when the system reports itself not ok, a Status
+        warning of severity error is active, a radio is not connected or
+        the event stream is down; unknown(3) when the system's API has not
+        answered for five minutes."
+    ::= { hmSystem 5 }
+
+hmSysWarnings OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The active Status warnings of severity warning or error."
+    ::= { hmSystem 6 }
+
+hmSysWarningsError OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The active Status warnings of severity error."
+    ::= { hmSystem 7 }
+
+hmSysMetaRevision OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The revision of the metadata (names, rooms, functions)."
+    ::= { hmSystem 8 }
+
+hmSysAgentVersion OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The version of lite-addon-snmp."
+    ::= { hmSystem 9 }
+
+hmSysDataAge OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "seconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Seconds since the agent last read the system's API successfully;
+        4294967295 before the first read."
+    ::= { hmSystem 10 }
+
+-- hmInterfaceTable
+
+hmInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF HmInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The interface processes and their radios."
+    ::= { liteSnmpObjects 2 }
+
+hmInterfaceEntry OBJECT-TYPE
+    SYNTAX      HmInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "One interface process."
+    INDEX       { hmIfName }
+    ::= { hmInterfaceTable 1 }
+
+HmInterfaceEntry ::= SEQUENCE {
+    hmIfName                  OCTET STRING,
+    hmIfProtocol              INTEGER,
+    hmIfRunning               TruthValue,
+    hmIfConnected             HmTriState,
+    hmIfDutyCycle             Gauge32,
+    hmIfCarrierSense          Integer32,
+    hmIfDutyCycleThreshold    Gauge32,
+    hmIfModule                DisplayString,
+    hmIfFirmware              DisplayString,
+    hmIfAddress               DisplayString,
+    hmIfDevices               Gauge32,
+    hmIfUnreach               Gauge32,
+    hmIfLowBat                Gauge32,
+    hmIfServiceMessages       Gauge32,
+    hmIfEvents                Counter64,
+    hmIfLastEventAge          Integer32,
+    hmIfCounterDiscontinuity  TimeStamp
+}
+
+hmIfName OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..24))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The interface's name: HmIP-RF, BidCos-RF, BidCos-Wired, VirtualDevices."
+    ::= { hmInterfaceEntry 1 }
+
+hmIfProtocol OBJECT-TYPE
+    SYNTAX      INTEGER { bidcos(1), hmip(2), wired(3), virtual(4), other(5) }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The interface's protocol."
+    ::= { hmInterfaceEntry 2 }
+
+hmIfRunning OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Whether the interface process runs."
+    ::= { hmInterfaceEntry 3 }
+
+hmIfConnected OBJECT-TYPE
+    SYNTAX      HmTriState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Whether its radio module is connected; unknown(3) for an interface without a radio."
+    ::= { hmInterfaceEntry 4 }
+
+hmIfDutyCycle OBJECT-TYPE
+    SYNTAX      Gauge32 (0..100)
+    UNITS       "percent"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The radio's duty cycle, sampled by the system once a minute."
+    ::= { hmInterfaceEntry 5 }
+
+hmIfCarrierSense OBJECT-TYPE
+    SYNTAX      Integer32 (-1..100)
+    UNITS       "percent"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The radio's carrier sense level; -1 when not known."
+    ::= { hmInterfaceEntry 6 }
+
+hmIfDutyCycleThreshold OBJECT-TYPE
+    SYNTAX      Gauge32 (0..100)
+    UNITS       "percent"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The duty cycle from which the system warns."
+    ::= { hmInterfaceEntry 7 }
+
+hmIfModule OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The radio module's type."
+    ::= { hmInterfaceEntry 8 }
+
+hmIfFirmware OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The radio module's firmware."
+    ::= { hmInterfaceEntry 9 }
+
+hmIfAddress OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The radio module's address."
+    ::= { hmInterfaceEntry 10 }
+
+hmIfDevices OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The devices of the interface."
+    ::= { hmInterfaceEntry 11 }
+
+hmIfUnreach OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The devices reported unreachable."
+    ::= { hmInterfaceEntry 12 }
+
+hmIfLowBat OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The devices reporting a low battery."
+    ::= { hmInterfaceEntry 13 }
+
+hmIfServiceMessages OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The active service messages of the interface's devices."
+    ::= { hmInterfaceEntry 14 }
+
+hmIfEvents OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The events the agent received from the interface since its start;
+        hmIfCounterDiscontinuity says when the count began."
+    ::= { hmInterfaceEntry 15 }
+
+hmIfLastEventAge OBJECT-TYPE
+    SYNTAX      Integer32 (-1..2147483647)
+    UNITS       "seconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Seconds since the interface's newest event; -1 before the first."
+    ::= { hmInterfaceEntry 16 }
+
+hmIfCounterDiscontinuity OBJECT-TYPE
+    SYNTAX      TimeStamp
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The sysUpTime at which hmIfEvents began counting."
+    ::= { hmInterfaceEntry 17 }
+
+-- hmServiceMessages
+
+hmSmCount OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The active service messages."
+    ::= { hmServiceMessages 1 }
+
+hmSmTypeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF HmSmTypeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The active service messages by key."
+    ::= { hmServiceMessages 2 }
+
+hmSmTypeEntry OBJECT-TYPE
+    SYNTAX      HmSmTypeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "One key."
+    INDEX       { hmSmTypeKey }
+    ::= { hmSmTypeTable 1 }
+
+HmSmTypeEntry ::= SEQUENCE {
+    hmSmTypeKey    OCTET STRING,
+    hmSmTypeCount  Gauge32
+}
+
+hmSmTypeKey OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..40))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The datapoint key: UNREACH, LOWBAT, CONFIG_PENDING, ..."
+    ::= { hmSmTypeEntry 1 }
+
+hmSmTypeCount OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The active messages with this key."
+    ::= { hmSmTypeEntry 2 }
+
+hmSmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF HmSmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The active service messages."
+    ::= { hmServiceMessages 3 }
+
+hmSmEntry OBJECT-TYPE
+    SYNTAX      HmSmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "One message: a maintenance datapoint active on a device."
+    INDEX       { hmSmInterface, hmSmAddress, hmSmKey }
+    ::= { hmSmTable 1 }
+
+HmSmEntry ::= SEQUENCE {
+    hmSmInterface    OCTET STRING,
+    hmSmAddress      OCTET STRING,
+    hmSmKey          OCTET STRING,
+    hmSmValue        SnmpAdminString,
+    hmSmSince        DateAndTime,
+    hmSmDeviceType   DisplayString,
+    hmSmDeviceName   SnmpAdminString,
+    hmSmRooms        SnmpAdminString,
+    hmSmSeen         INTEGER
+}
+
+hmSmInterface OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..24))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The device's interface."
+    ::= { hmSmEntry 1 }
+
+hmSmAddress OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The device's address."
+    ::= { hmSmEntry 2 }
+
+hmSmKey OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..40))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The datapoint key."
+    ::= { hmSmEntry 3 }
+
+hmSmValue OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The datapoint's value as text (true, a fault code)."
+    ::= { hmSmEntry 4 }
+
+hmSmSince OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Since when the message is active (at least since, when hmSmSeen is start(2))."
+    ::= { hmSmEntry 5 }
+
+hmSmDeviceType OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's type."
+    ::= { hmSmEntry 6 }
+
+hmSmDeviceName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's name."
+    ::= { hmSmEntry 7 }
+
+hmSmRooms OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's rooms, joined by a comma."
+    ::= { hmSmEntry 8 }
+
+hmSmSeen OBJECT-TYPE
+    SYNTAX      INTEGER { event(1), start(2) }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "event(1) when the system saw the message come up; start(2) when it
+        found it already active."
+    ::= { hmSmEntry 9 }
+
+-- hmDeviceTable
+
+hmDeviceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF HmDeviceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The devices of the selection the user chose for this table (every
+        device by default)."
+    ::= { liteSnmpObjects 4 }
+
+hmDeviceEntry OBJECT-TYPE
+    SYNTAX      HmDeviceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "One device."
+    INDEX       { hmDevInterface, hmDevAddress }
+    ::= { hmDeviceTable 1 }
+
+HmDeviceEntry ::= SEQUENCE {
+    hmDevInterface         OCTET STRING,
+    hmDevAddress           OCTET STRING,
+    hmDevType              DisplayString,
+    hmDevFirmware          DisplayString,
+    hmDevName              SnmpAdminString,
+    hmDevRooms             SnmpAdminString,
+    hmDevFunctions         SnmpAdminString,
+    hmDevChannels          Gauge32,
+    hmDevReachable         HmTriState,
+    hmDevLowBat            HmTriState,
+    hmDevConfigPending     HmTriState,
+    hmDevRssiDevice        Integer32,
+    hmDevRssiPeer          Integer32,
+    hmDevOperatingVoltage  Integer32,
+    hmDevDutyCycle         HmTriState,
+    hmDevServiceMessages   Gauge32,
+    hmDevLastSeenAge       Integer32
+}
+
+hmDevInterface OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..24))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The device's interface."
+    ::= { hmDeviceEntry 1 }
+
+hmDevAddress OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE (1..32))
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION "The device's address."
+    ::= { hmDeviceEntry 2 }
+
+hmDevType OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's type."
+    ::= { hmDeviceEntry 3 }
+
+hmDevFirmware OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's firmware."
+    ::= { hmDeviceEntry 4 }
+
+hmDevName OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's name."
+    ::= { hmDeviceEntry 5 }
+
+hmDevRooms OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The rooms of the device and its channels, joined by a comma."
+    ::= { hmDeviceEntry 6 }
+
+hmDevFunctions OBJECT-TYPE
+    SYNTAX      SnmpAdminString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The functions of the device and its channels, joined by a comma."
+    ::= { hmDeviceEntry 7 }
+
+hmDevChannels OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's channels, channel 0 included."
+    ::= { hmDeviceEntry 8 }
+
+hmDevReachable OBJECT-TYPE
+    SYNTAX      HmTriState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "false(2) while UNREACH is set."
+    ::= { hmDeviceEntry 9 }
+
+hmDevLowBat OBJECT-TYPE
+    SYNTAX      HmTriState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "LOWBAT or LOW_BAT."
+    ::= { hmDeviceEntry 10 }
+
+hmDevConfigPending OBJECT-TYPE
+    SYNTAX      HmTriState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "CONFIG_PENDING."
+    ::= { hmDeviceEntry 11 }
+
+hmDevRssiDevice OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RSSI_DEVICE; 0 when not known."
+    ::= { hmDeviceEntry 12 }
+
+hmDevRssiPeer OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "dBm"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RSSI_PEER; 0 when not known."
+    ::= { hmDeviceEntry 13 }
+
+hmDevOperatingVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "OPERATING_VOLTAGE; -1 when not known."
+    ::= { hmDeviceEntry 14 }
+
+hmDevDutyCycle OBJECT-TYPE
+    SYNTAX      HmTriState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's own DUTY_CYCLE flag."
+    ::= { hmDeviceEntry 15 }
+
+hmDevServiceMessages OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The device's active service messages."
+    ::= { hmDeviceEntry 16 }
+
+hmDevLastSeenAge OBJECT-TYPE
+    SYNTAX      Integer32 (-1..2147483647)
+    UNITS       "seconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Seconds since the newest event or confirmed value of the device;
+        -1 when none is known."
+    ::= { hmDeviceEntry 17 }
+
+-- hmStatistics
+
+hmStatStreamReconnects OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "How often the agent's event stream reconnected."
+    ::= { hmStatistics 1 }
+
+hmStatResyncs OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "How often the agent read the state store again after a gap."
+    ::= { hmStatistics 2 }
+
+hmStatSubscribers OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The subscribers of the interface processes, summed."
+    ::= { hmStatistics 3 }
+
+hmStatSubscriberStalls OBJECT-TYPE
+    SYNTAX      Gauge32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The interface processes held by a subscriber that does not answer."
+    ::= { hmStatistics 4 }
+
+hmStatAgentRequests OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The requests the agent answered."
+    ::= { hmStatistics 5 }
+
+hmStatAgentAuthFailures OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Wrong communities, unknown users and wrong digests."
+    ::= { hmStatistics 6 }
+
+hmStatTrapsSent OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The notifications sent (informs: acknowledged)."
+    ::= { hmStatistics 7 }
+
+hmStatTrapsFailed OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "The notifications dropped: rate limited, queue full, or informs never acknowledged."
+    ::= { hmStatistics 8 }
+
+hmStatStreamConnected OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Whether the agent's event stream is connected."
+    ::= { hmStatistics 9 }
+{{.Notifications}}
+-- Conformance
+
+liteSnmpCompliances OBJECT IDENTIFIER ::= { liteSnmpConformance 1 }
+liteSnmpGroups      OBJECT IDENTIFIER ::= { liteSnmpConformance 2 }
+
+liteSnmpCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION "What lite-addon-snmp implements."
+    MODULE      -- this module
+        MANDATORY-GROUPS { hmSystemGroup, hmInterfaceGroup, hmServiceMessageGroup,
+                           hmDeviceGroup, hmStatisticsGroup{{.ComplianceGroups}} }
+    ::= { liteSnmpCompliances 1 }
+
+hmSystemGroup OBJECT-GROUP
+    OBJECTS { hmSysProduct, hmSysVersion, hmSysBase, hmSysOcculitedCommit, hmSysHealth,
+              hmSysWarnings, hmSysWarningsError, hmSysMetaRevision, hmSysAgentVersion,
+              hmSysDataAge }
+    STATUS      current
+    DESCRIPTION "The system's identity and health."
+    ::= { liteSnmpGroups 1 }
+
+hmInterfaceGroup OBJECT-GROUP
+    OBJECTS { hmIfProtocol, hmIfRunning, hmIfConnected, hmIfDutyCycle, hmIfCarrierSense,
+              hmIfDutyCycleThreshold, hmIfModule, hmIfFirmware, hmIfAddress, hmIfDevices,
+              hmIfUnreach, hmIfLowBat, hmIfServiceMessages, hmIfEvents, hmIfLastEventAge,
+              hmIfCounterDiscontinuity }
+    STATUS      current
+    DESCRIPTION "The interface table."
+    ::= { liteSnmpGroups 2 }
+
+hmServiceMessageGroup OBJECT-GROUP
+    OBJECTS { hmSmCount, hmSmTypeCount, hmSmValue, hmSmSince, hmSmDeviceType,
+              hmSmDeviceName, hmSmRooms, hmSmSeen }
+    STATUS      current
+    DESCRIPTION "The service messages."
+    ::= { liteSnmpGroups 3 }
+
+hmDeviceGroup OBJECT-GROUP
+    OBJECTS { hmDevType, hmDevFirmware, hmDevName, hmDevRooms, hmDevFunctions,
+              hmDevChannels, hmDevReachable, hmDevLowBat, hmDevConfigPending,
+              hmDevRssiDevice, hmDevRssiPeer, hmDevOperatingVoltage, hmDevDutyCycle,
+              hmDevServiceMessages, hmDevLastSeenAge }
+    STATUS      current
+    DESCRIPTION "The device table."
+    ::= { liteSnmpGroups 4 }
+
+hmStatisticsGroup OBJECT-GROUP
+    OBJECTS { hmStatStreamReconnects, hmStatResyncs, hmStatSubscribers,
+              hmStatSubscriberStalls, hmStatAgentRequests, hmStatAgentAuthFailures,
+              hmStatTrapsSent, hmStatTrapsFailed, hmStatStreamConnected }
+    STATUS      current
+    DESCRIPTION "The agent's statistics."
+    ::= { liteSnmpGroups 5 }
+{{.Groups}}
+END
