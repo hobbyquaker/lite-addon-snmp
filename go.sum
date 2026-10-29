@@ -1,0 +1,4 @@
+github.com/gosnmp/gosnmp v1.47.0 h1:nQ0H9erruu03QP0lviAJ6vB6iiIGE0R5u73MKFr6QPs=
+github.com/gosnmp/gosnmp v1.47.0/go.mod h1:LWPVcDKeRsiioQGeITGTQha4mdlx9lgmRmXz6zGINQ4=
+github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261028161954-88c0703cc397 h1:Nqh8KWVw2MdNy0+1Y8MmlqPJ4UMuRMCfOZmInu4cq20=
+github.com/hobbyquaker/ccu-addon-kit/go v0.0.0-20261028161954-88c0703cc397/go.mod h1:IShVNKzAsWAa9IkyYUP/iXwaG1DoxoEGbgODw1XeCTE=
