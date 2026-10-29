@@ -1,0 +1,309 @@
+/* The selection editor's rules, copied from lite-addon-forwarder ui/src/app.css at commit 5c506f7
+   with SelectionEditor.svelte and ChipInput.svelte. */
+
+.fw-spacer {
+    flex: 1;
+}
+
+.fw-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.fw-muted {
+    color: var(--hmm-fg-muted);
+}
+
+.fw-faint {
+    color: var(--hmm-fg-faint);
+}
+
+.fw-small {
+    font-size: var(--hmm-font-size-small);
+}
+
+.fw-mono {
+    font-family: var(--hmm-font-mono);
+    font-size: var(--hmm-font-size-small);
+}
+
+.fw-error {
+    color: var(--hmm-error);
+}
+
+.fw-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hmm-form-row-gap, 8px);
+}
+
+.fw-row {
+    display: grid;
+    grid-template-columns: var(--hmm-form-label-width, 11rem) minmax(0, 1fr);
+    gap: var(--hmm-form-column-gap, 10px);
+    align-items: start;
+}
+
+.fw-row > label:first-child,
+.fw-row > .fw-label {
+    padding-top: 4px;
+    color: var(--hmm-fg-muted);
+}
+
+.fw-row .hmm-input,
+.fw-row .hmm-select,
+.fw-row textarea {
+    width: 100%;
+    max-width: 36rem;
+}
+
+.fw-row textarea {
+    font-family: var(--hmm-font-mono);
+    font-size: var(--hmm-font-size-small);
+    padding: 4px 6px;
+    border: 1px solid var(--hmm-border);
+    border-radius: var(--hmm-radius);
+    background: var(--hmm-input-bg);
+    resize: vertical;
+}
+
+.fw-row .fw-inline {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.fw-row .fw-inline .hmm-input {
+    width: auto;
+}
+
+.fw-help {
+    font-size: var(--hmm-font-size-small);
+    color: var(--hmm-fg-muted);
+    margin-top: 2px;
+}
+
+.fw-checks {
+    display: flex;
+    gap: 6px 14px;
+    flex-wrap: wrap;
+}
+
+.fw-checks label {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.fw-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    min-height: 26px;
+    padding: 2px 4px;
+    border: 1px solid var(--hmm-border);
+    border-radius: var(--hmm-radius);
+    background: var(--hmm-input-bg);
+    max-width: 36rem;
+}
+
+.fw-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px 0 8px;
+    border-radius: 999px;
+    background: var(--hmm-accent-bg);
+    color: var(--hmm-accent-fg);
+    font-size: var(--hmm-font-size-small);
+    line-height: 1.7;
+    max-width: 18em;
+}
+
+.fw-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fw-chip button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0 3px;
+    line-height: 1;
+    color: inherit;
+}
+
+.fw-chips input {
+    flex: 1;
+    min-width: 8em;
+    border: 0;
+    background: transparent;
+    outline: none;
+    height: 22px;
+}
+
+.fw-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 7.5em;
+    overflow: auto;
+    margin-top: 4px;
+    max-width: 36rem;
+}
+
+.fw-suggest button {
+    border: 1px solid var(--hmm-border);
+    border-radius: 999px;
+    background: var(--hmm-control-bg);
+    padding: 0 8px;
+    font-size: var(--hmm-font-size-small);
+    cursor: pointer;
+    line-height: 1.7;
+}
+
+.fw-suggest button .fw-faint {
+    margin-left: 5px;
+}
+
+.fw-suggest button:hover {
+    background: var(--hmm-control-bg-hover);
+}
+
+.fw-suggest button.on {
+    background: var(--hmm-accent-bg);
+    color: var(--hmm-accent-fg);
+    border-color: var(--hmm-accent);
+}
+
+.fw-tree {
+    border: 1px solid var(--hmm-border);
+    border-radius: var(--hmm-radius);
+    background: var(--hmm-input-bg);
+    height: 20rem;
+    overflow: auto;
+    font-size: var(--hmm-font-size-small);
+}
+
+.fw-tree-row {
+    display: grid;
+    grid-template-columns: 1.5em 1.5em minmax(0, 1fr) 7em 10em 2.5em;
+    gap: 6px;
+    align-items: center;
+    padding: 1px 6px;
+    white-space: nowrap;
+}
+
+.fw-tree-row:nth-child(even) {
+    background: var(--hmm-row-even);
+}
+
+.fw-tree-row.channel {
+    padding-left: 26px;
+}
+
+.fw-tree-row .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fw-tree-row .type {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--hmm-fg-muted);
+    font-family: var(--hmm-font-mono);
+}
+
+.fw-tree-row .x {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    width: 2em;
+    text-align: center;
+    color: var(--hmm-fg-faint);
+    border-radius: var(--hmm-radius);
+}
+
+.fw-tree-row .x.on {
+    color: var(--hmm-error);
+    background: var(--hmm-control-bg);
+}
+
+.fw-tree-row .caret {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    width: 1.5em;
+    color: var(--hmm-fg-muted);
+}
+
+.fw-match {
+    border: 1px solid var(--hmm-border);
+    border-radius: var(--hmm-radius);
+    background: var(--hmm-bg-sunken);
+    padding: 8px 10px;
+}
+
+.fw-match-count {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    min-height: 1.6em;
+}
+
+.fw-match-count b {
+    font-size: 1.1em;
+    font-variant-numeric: tabular-nums;
+}
+
+.fw-preview {
+    font-family: var(--hmm-font-mono);
+    font-size: var(--hmm-font-size-small);
+    white-space: pre;
+    overflow: auto;
+    height: 10rem;
+    margin: 6px 0 0;
+    padding: 6px 8px;
+    border: 1px solid var(--hmm-border-muted);
+    border-radius: var(--hmm-radius);
+    background: var(--hmm-input-bg);
+}
+
+.fw-preview.tall {
+    height: 16rem;
+}
+
+.fw-empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--hmm-fg-muted);
+    border: 1px dashed var(--hmm-border);
+    border-radius: var(--hmm-radius);
+}
+
+.fw-dialog-tabs {
+    margin-bottom: 8px;
+}
+
+.fw-help-table {
+    font-size: var(--hmm-font-size-small);
+    border-collapse: collapse;
+}
+
+.fw-help-table td {
+    padding: 1px 8px 1px 0;
+    vertical-align: top;
+}
+
+.fw-help-table td:first-child {
+    font-family: var(--hmm-font-mono);
+    white-space: nowrap;
+}

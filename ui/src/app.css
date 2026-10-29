@@ -1,0 +1,388 @@
+/* The page's own rules on top of occulite-ui's tokens. Colours are the kit's custom properties
+   only, so dark mode comes with them. Nothing changes its box with its state: pills have a fixed
+   width, the live count reserves its line. */
+
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+}
+
+.snmp-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.snmp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px 0;
+    flex-wrap: wrap;
+}
+
+.snmp-header h1 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 4px 0 0;
+}
+
+.snmp-spacer {
+    flex: 1;
+}
+
+.snmp-page {
+    flex: 1;
+    min-height: 0;
+    padding: 8px 12px 24px;
+    overflow: auto;
+}
+
+.snmp-banner {
+    margin: 6px 12px 0;
+    padding: 6px 10px;
+    border: 1px solid var(--hmm-error, #c33);
+    border-radius: var(--hmm-radius, 4px);
+}
+
+.snmp-section {
+    max-width: 64rem;
+    margin: 0 0 18px;
+}
+
+.snmp-section h2 {
+    font-size: 1rem;
+    margin: 12px 0 8px;
+}
+
+.snmp-section h3 {
+    font-size: 0.95rem;
+    margin: 12px 0 6px;
+}
+
+.snmp-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.snmp-section-head h2 {
+    flex: 1;
+}
+
+.snmp-form {
+    display: grid;
+    grid-template-columns: minmax(10rem, max-content) minmax(0, 28rem);
+    gap: 8px 12px;
+    align-items: center;
+}
+
+.snmp-form .snmp-check,
+.snmp-form .snmp-help,
+.snmp-form .snmp-span {
+    grid-column: 1 / -1;
+}
+
+.snmp-form input[type='text'],
+.snmp-form input[type='password'],
+.snmp-form input[type='number'],
+.snmp-form select,
+.snmp-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.snmp-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.snmp-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.snmp-label {
+    color: var(--hmm-fg-muted, inherit);
+}
+
+.snmp-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.snmp-help,
+.snmp-muted {
+    color: var(--hmm-fg-muted, inherit);
+    font-size: var(--hmm-font-size-small, 0.9em);
+}
+
+.snmp-help {
+    margin: 0;
+}
+
+.snmp-notice {
+    padding: 6px 10px;
+    border-left: 3px solid var(--hmm-accent, #2a7de1);
+    background: var(--hmm-bg-sunken, transparent);
+}
+
+.snmp-warning {
+    padding: 6px 10px;
+    border-left: 3px solid var(--hmm-warn, #c80);
+    background: var(--hmm-bg-sunken, transparent);
+}
+
+.snmp-error {
+    color: var(--hmm-error, #c33);
+    min-height: 1.4em;
+    margin: 4px 0;
+}
+
+.snmp-code {
+    font-family: var(--hmm-font-mono, monospace);
+    font-size: var(--hmm-font-size-small, 0.9em);
+    word-break: break-all;
+}
+
+button.snmp-primary,
+button.snmp-primary:hover:not(:disabled) {
+    background: var(--hmm-accent, #0070c1);
+    color: var(--hmm-accent-fg, #fff);
+    border-color: transparent;
+}
+
+button.snmp-danger {
+    background: var(--hmm-error, #c33);
+    color: #fff;
+    border-color: transparent;
+}
+
+.snmp-grid {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.snmp-grid th,
+.snmp-grid td {
+    text-align: left;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--hmm-border-muted, #8883);
+    vertical-align: middle;
+}
+
+.snmp-grid th {
+    font-weight: 600;
+    color: var(--hmm-fg-muted, inherit);
+}
+
+.snmp-grid-compact th,
+.snmp-grid-compact td {
+    padding: 2px 6px;
+    font-size: var(--hmm-font-size-small, 0.9em);
+}
+
+.snmp-subrow td {
+    border-bottom-width: 2px;
+    padding-top: 0;
+}
+
+.snmp-cell-actions {
+    white-space: nowrap;
+    text-align: right !important;
+}
+
+.snmp-cell-actions button + button {
+    margin-left: 4px;
+}
+
+.snmp-scroll {
+    max-height: 50vh;
+    overflow: auto;
+}
+
+/* a pill keeps its box across states: fixed width, the text cut */
+.snmp-pill {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 8.5em;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 0.85em;
+    line-height: 1.6;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid var(--hmm-border, #8884);
+}
+
+.snmp-pill.ok {
+    border-color: var(--hmm-ok, #2a8a3e);
+    color: var(--hmm-ok, #2a8a3e);
+}
+
+.snmp-pill.bad {
+    border-color: var(--hmm-error, #c33);
+    color: var(--hmm-error, #c33);
+}
+
+.snmp-kv {
+    display: grid;
+    grid-template-columns: minmax(12rem, max-content) 1fr;
+    gap: 4px 16px;
+    align-items: center;
+}
+
+.snmp-kv > span:nth-child(odd) {
+    color: var(--hmm-fg-muted, inherit);
+}
+
+.snmp-list {
+    margin: 0;
+    padding-left: 1.2em;
+}
+
+/* the selection editor */
+.snmp-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    min-height: 0;
+}
+
+.snmp-editor-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.snmp-editor-top input {
+    width: 18rem;
+}
+
+.snmp-count {
+    flex: 1;
+    text-align: right;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.snmp-editor-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.snmp-tree-pane,
+.snmp-criteria-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    overflow: auto;
+    border: 1px solid var(--hmm-border-muted, #8883);
+    border-radius: var(--hmm-radius, 4px);
+    padding: 6px;
+}
+
+.snmp-tree-pane input[type='search'] {
+    flex: 1;
+}
+
+.snmp-tree,
+.snmp-tree ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.snmp-tree ul {
+    padding-left: 2.2em;
+}
+
+.snmp-tree-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 1.8em;
+}
+
+.snmp-tree-name {
+    white-space: nowrap;
+}
+
+.snmp-tree-meta {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.snmp-twisty {
+    width: 1.6em;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+}
+
+.snmp-preview {
+    height: 26%;
+    min-height: 6rem;
+    overflow: auto;
+}
+
+.snmp-chips label {
+    display: block;
+    font-size: var(--hmm-font-size-small, 0.9em);
+    color: var(--hmm-fg-muted, inherit);
+    margin-bottom: 2px;
+}
+
+.snmp-chips-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.snmp-chips-box input {
+    flex: 1;
+    min-width: 10rem;
+}
+
+.snmp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 2px 0 8px;
+    border-radius: 999px;
+    border: 1px solid var(--hmm-border, #8884);
+    background: var(--hmm-control-bg, transparent);
+    font-size: var(--hmm-font-size-small, 0.9em);
+}
+
+.snmp-chip button {
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+input.snmp-invalid {
+    outline: 2px solid var(--hmm-error, #c33);
+}
