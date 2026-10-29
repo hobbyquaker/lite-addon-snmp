@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "id": "snmp",
+  "name": "SNMP",
+  "description": {
+    "de": "Ein SNMP-Agent (nur lesend, SNMPv3 mit SHA-256/AES): die Standard-MIBs eines Linux-Hosts für LibreNMS, Zabbix, PRTG oder Checkmk und die Homematic-Seite des Systems in einem eigenen Baum – Schnittstellen und Duty Cycle, Servicemeldungen, Geräte mit Erreichbarkeit und Batterie, ausgewählt über wiederverwendbare Auswahlen.",
+    "en": "An SNMP agent (read-only, SNMPv3 with SHA-256/AES): the standard MIBs of a Linux host for LibreNMS, Zabbix, PRTG or Checkmk, and the Homematic side of the system in a tree of its own - interfaces and duty cycle, service messages, devices with reachability and battery, chosen with reusable selections."
+  },
+  "version": "0.1.0",
+  "homepage": "https://github.com/hobbyquaker/lite-addon-snmp",
+  "licence": "MIT",
+  "changelog": "https://github.com/hobbyquaker/lite-addon-snmp/blob/main/CHANGELOG.md",
+  "release": {
+    "github": "hobbyquaker/lite-addon-snmp",
+    "asset": "snmp-{arch}-{version}.tar.gz"
+  },
+  "requires": {
+    "architectures": ["aarch64", "x86_64", "armv7l"]
+  },
+  "ui": {
+    "icon": "snmp/www/icon.svg",
+    "icon_dark": "snmp/www/icon-dark.svg",
+    "settings_url": "/addons/snmp/",
+    "session_header": true
+  },
+  "runtime": {
+    "daemon": true,
+    "needs": [],
+    "capabilities": ["CAP_NET_BIND_SERVICE"],
+    "ports": [161],
+    "port_info": {"161": {"proto": "udp", "label": {"de": "SNMP-Agent", "en": "SNMP agent"}}},
+    "api_scopes": ["rpc:read", "meta:read", "system:read"],
+    "note": {
+      "de": "Bindet UDP-Port 161 (dafür CAP_NET_BIND_SERVICE, sonst kein Recht). Liest Geräteliste, Gerätebeschreibungen, Zustandsspeicher und Ereignisstrom der Schnittstellen, Namen, Räume und Gewerke aus den Metadaten sowie Funkzustand, Servicemeldungen und Statuswarnungen des Systems; löst nie eine Funkübertragung aus. Beantwortet SNMP-Abfragen nur lesend. Keine anderen Verbindungen nach außen. Der Port ist geschlossen, bis Sie ihn öffnen.",
+      "en": "Binds UDP port 161 (hence CAP_NET_BIND_SERVICE, no other privilege). Reads the device lists, the device descriptions, the state store and the event stream of the interfaces, the names, rooms and functions from the metadata, and the system's radio health, service messages and Status warnings; never causes a radio transmission. Answers SNMP queries read-only. No other outgoing connections. The port is closed until you open it."
+    }
+  }
+}

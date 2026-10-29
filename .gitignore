@@ -1,0 +1,13 @@
+/dist/
+/build/
+/ui/node_modules/
+/ui/dist/
+/ui/test-results/
+/ui/playwright-report/
+# the build fills app/, bin/ and mib/; the manifest's icons, the 503 page and the proxy rule are
+# tracked in the tree, where the catalogue reads the icons beside the manifest at the release tag
+/addon/snmp/app/
+/addon/snmp/bin/
+/addon/snmp/mib/
+/addon/snmp/versions
+/addon/snmp/var/
