@@ -83,7 +83,7 @@ type State struct {
 	Values     map[string]Value   // "<interface>/<channel address>/<key>"
 	// LastSeen is the newest event or confirmed value per device, "<interface>/<address>".
 	LastSeen map[string]time.Time
-	Names      *litesource.Names
+	Names    *litesource.Names
 	// Paramsets is the description cache (keys per channel type).
 	Paramsets       litesource.ParamsetCache
 	ServiceMessages []ServiceMessage
